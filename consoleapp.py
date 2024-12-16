@@ -6,6 +6,7 @@ BASE_URL = "https://www.googleapis.com/books/v1/volumes"
 
 favourites = []
 readed = []
+rating = []
 
 def search_books_by_author(authorname, many_not=0):
     # Формируем запрос к Google Books API
@@ -52,6 +53,11 @@ def search_books_by_author(authorname, many_not=0):
                         elif add_to == "прочитанное":
                             readed.append(title)
                             print("Книга добавлена в прочитанное")
+                            y_o_n = input(("Уже читали эту книгу? Хотите оценить её?.да/нет "))
+                            if y_o_n == "да":
+                                rate = int((input("Напишите оценку от 1 до 10 ")))
+                                rated_book = f"{title}: {rate}"
+                                rating.append(rated_book)
                         else:
                             print("Не пиши ерунду")
                     else:
@@ -138,6 +144,15 @@ def fav(favourites, readed):
     else:
         print("Да ты уже достал")
 
+def books_rating(rating):
+    us = input("Хотите посмотреть оцененные вами книги?да/нет ")
+    if us == "да":
+        print(f"Оценённые: {', '.join(rating)}")
+    elif us == "нет":
+        print("ok")
+    else:
+        print("Пиши по-человечески")
+
 
 search_type = input("Хотите искать по автору или по названию книги? (автор/название): ")
 if search_type.lower() == "автор":
@@ -153,4 +168,5 @@ else:
 
 
 fav(favourites, readed)
+books_rating(rating)
 
