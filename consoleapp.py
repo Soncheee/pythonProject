@@ -1,3 +1,5 @@
+from multiprocessing.sharedctypes import Value
+
 import requests
 
 # Ваш API-ключ для Google Books API (зарегистрируйтесь на https://console.cloud.google.com/, чтобы получить ключ)
@@ -55,9 +57,16 @@ def search_books_by_author(authorname, many_not=0):
                             print("Книга добавлена в прочитанное")
                             y_o_n = input(("Уже читали эту книгу? Хотите оценить её?.да/нет "))
                             if y_o_n == "да":
-                                rate = int((input("Напишите оценку от 1 до 10 ")))
-                                rated_book = f"{title}: {rate}"
-                                rating.append(rated_book)
+                                rate = (input("Напишите оценку от 1 до 10 "))
+                                try:
+                                    if 1 <= int(rate) <= 10:
+                                        rated_book = f"{title}: {rate}"
+                                        rating.append(rated_book)
+                                    else:
+                                        print("Ты можешь ввести только оценку от 1 до 10")
+                                except ValueError:
+                                    print("Ты можешь ввести только целое число от 1 до 10")
+
                         else:
                             print("Не пиши ерунду")
                     else:
