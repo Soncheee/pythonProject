@@ -1,16 +1,37 @@
 from multiprocessing.sharedctypes import Value
-
 import requests
+import json
 
 # Ваш API-ключ для Google Books API (зарегистрируйтесь на https://console.cloud.google.com/, чтобы получить ключ)
 API_KEY = "AIzaSyDn9yBPBZ-4nKtiAVE8knpwT5mYV5VAjLI"
 BASE_URL = "https://www.googleapis.com/books/v1/volumes"
 
-favourites = []
-readed = []
-rating = []
+# Имена файлов для хранения списков
+FAVOURITES_FILE = 'favourites.json'
+READED_FILE = 'readed.json'
+RATING_FILE = 'rating.json'
 
-def search_books_by_author(authorname, many_not=0):
+def load_list(filename):
+    try:
+        with open(filename, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
+
+def save_list(filename, lst):
+    with open(filename, 'w') as file:
+        json.dump(lst, file)
+
+def add_to_list(filename, value):
+    lst = load_list(filename)
+    lst.append(value)
+    save_list(filename, lst)
+
+favourites = load_list(FAVOURITES_FILE)
+readed = load_list(READED_FILE)
+rating = load_list(RATING_FILE)
+
+def search_books_by_author(author_name, many_not=0):
     # Формируем запрос к Google Books API
     params = {
         'q': f'inauthor:{author_name}',  # Поиск книг по автору
@@ -34,13 +55,13 @@ def search_books_by_author(authorname, many_not=0):
                     published_date = item['volumeInfo'].get('publishedDate', 'Неизвестно')
                     print(
                         f"- Название: {title}\n  Автор(ы): {', '.join(authors)}\n  Дата публикации: {published_date}\n")
-                    answers_to_add = (input("Хотите ли вы добавить эту книгу в список избранных или уже прочитанного?(да/нет) "))
+                    answers_to_add = input("Хотите ли вы добавить эту книгу в список избранных или уже прочитанного?(да/нет) ")
                     if answers_to_add == "нет":
                         many_not += 1
                         if many_not <= 3:
                             continue
                         else:
-                            more = input(("Хотите больше книг этого автора?да/нет "))
+                            more = input("Хотите больше книг этого автора?да/нет ")
                             if more == "да":
                                 continue
                             elif more == "нет":
@@ -50,29 +71,26 @@ def search_books_by_author(authorname, many_not=0):
                     elif answers_to_add == "да":
                         add_to = input("куда вы хотите добавить: избранное или прочитанное? ")
                         if add_to == "избранное":
-                            favourites.append(title)
+                            add_to_list(FAVOURITES_FILE, title)
                             print("Книга добавлена в избранное")
                         elif add_to == "прочитанное":
-                            readed.append(title)
+                            add_to_list(READED_FILE, title)
                             print("Книга добавлена в прочитанное")
-                            y_o_n = input(("Уже читали эту книгу? Хотите оценить её?.да/нет "))
+                            y_o_n = input("Уже читали эту книгу? Хотите оценить её?.да/нет ")
                             if y_o_n == "да":
-                                rate = (input("Напишите оценку от 1 до 10 "))
+                                rate = input("Напишите оценку от 1 до 10 ")
                                 try:
                                     if 1 <= int(rate) <= 10:
                                         rated_book = f"{title}: {rate}"
-                                        rating.append(rated_book)
+                                        add_to_list(RATING_FILE, rated_book)  # Добавление оценки в список rating
                                     else:
                                         print("Ты можешь ввести только оценку от 1 до 10")
                                 except ValueError:
                                     print("Ты можешь ввести только целое число от 1 до 10")
-
                         else:
                             print("Не пиши ерунду")
                     else:
                         print("Не пиши ерунду")
-
-
             else:
                 print(f"Книги автора '{author_name}' не найдены.")
         else:
@@ -80,7 +98,6 @@ def search_books_by_author(authorname, many_not=0):
             print(f"Сообщение: {response.text}")
     except requests.exceptions.RequestException as e:
         print(f"Ошибка подключения: {e}")
-
 
 def search_books_by_title(book_title, many_not=0):
     # Формируем запрос к Google Books API
@@ -106,13 +123,13 @@ def search_books_by_title(book_title, many_not=0):
                     published_date = item['volumeInfo'].get('publishedDate', 'Неизвестно')
                     print(
                         f"- Название: {title}\n  Автор(ы): {', '.join(authors)}\n  Дата публикации: {published_date}\n")
-                    answers_to_add = (input("Хотите ли вы добавить эту книгу в список избранных или уже прочитанного?(да/нет)"))
+                    answers_to_add = input("Хотите ли вы добавить эту книгу в список избранных или уже прочитанного?(да/нет) ")
                     if answers_to_add == "нет":
                         many_not += 1
                         if many_not <= 3:
                             continue
                         else:
-                            more = input(("Хотите больше книг с этим названием?да/нет"))
+                            more = input("Хотите больше книг с этим названием?да/нет ")
                             if more == "да":
                                 continue
                             elif more == "нет":
@@ -120,18 +137,28 @@ def search_books_by_title(book_title, many_not=0):
                                 break
                         continue
                     elif answers_to_add == "да":
-                        add_to = input("куда вы хотите добавить: избранное или прочитанное?")
+                        add_to = input("куда вы хотите добавить: избранное или прочитанное? ")
                         if add_to == "избранное":
-                            favourites.append(title)
+                            add_to_list(FAVOURITES_FILE, title)
                             print("Книга добавлена в избранное")
                         elif add_to == "прочитанное":
-                            readed.append(title)
+                            add_to_list(READED_FILE, title)
                             print("Книга добавлена в прочитанное")
+                            y_o_n = input("Уже читали эту книгу? Хотите оценить её?.да/нет ")
+                            if y_o_n == "да":
+                                rate = input("Напишите оценку от 1 до 10 ")
+                                try:
+                                    if 1 <= int(rate) <= 10:
+                                        rated_book = f"{title}: {rate}"
+                                        add_to_list(RATING_FILE, rated_book)  # Добавление оценки в список rating
+                                    else:
+                                        print("Ты можешь ввести только оценку от 1 до 10")
+                                except ValueError:
+                                    print("Ты можешь ввести только целое число от 1 до 10")
                         else:
                             print("Не пиши ерунду")
                     else:
                         print("Не пиши ерунду")
-
             else:
                 print(f"Книги с названием '{book_title}' не найдены.")
         else:
@@ -139,9 +166,6 @@ def search_books_by_title(book_title, many_not=0):
             print(f"Сообщение: {response.text}")
     except requests.exceptions.RequestException as e:
         print(f"Ошибка подключения: {e}")
-
-
-
 
 def fav(favourites, readed):
     fav_or_readed = input("Хотите посмотреть избранное и прочитанное?.Напишите да или нет ")
@@ -162,7 +186,6 @@ def books_rating(rating):
     else:
         print("Пиши по-человечески")
 
-
 search_type = input("Хотите искать по автору или по названию книги? (автор/название): ")
 if search_type.lower() == "автор":
     author_name = input("Введите имя автора для поиска книг: ")
@@ -176,6 +199,6 @@ else:
     print("Пиши название или автора")
 
 
+
 fav(favourites, readed)
 books_rating(rating)
-
