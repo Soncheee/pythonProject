@@ -18,18 +18,36 @@ def load_list(filename):
     except FileNotFoundError:
         return []
 
+
+def add_to_list(filename, value):
+    """
+    Добавляет элемент в файл и сразу обновляет локальный список.
+    """
+    # Загружаем текущий список из файла
+    lst = load_list(filename)
+    # Проверяем, есть ли уже элемент
+    if value not in lst:
+        lst.append(value)  # Добавляем новый элемент
+        save_list(filename, lst)  # Сохраняем изменения в файл
+
+        # Обновляем локальный список
+        if filename == FAVOURITES_FILE:
+            favourites.append(value)
+        elif filename == READED_FILE:
+            readed.append(value)
+        elif filename == RATING_FILE:
+            rating.append(value)
+        else:
+            print(f"Ошибка: неизвестный файл {filename}")
+
 def save_list(filename, lst):
     with open(filename, 'w') as file:
         json.dump(lst, file)
 
-def add_to_list(filename, value):
-    lst = load_list(filename)
-    lst.append(value)
-    save_list(filename, lst)
-
 favourites = load_list(FAVOURITES_FILE)
 readed = load_list(READED_FILE)
 rating = load_list(RATING_FILE)
+
 
 def search_books_by_author(author_name, many_not=0):
     # Формируем запрос к Google Books API
